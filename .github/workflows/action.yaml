@@ -1,12 +1,12 @@
-name: Terraform Validation and Apply
+name: Terraform Validator
 
 on:
-  workflow_dispatch:
-    inputs:
-      terraform_block:
-        description: 'Terraform block to execute in one line'
-        required: true
-        type: string
+  push:
+    branches:
+      - main # Você pode ajustar isso para outra branch, se necessário
+  pull_request:
+    branches:
+      - main
 
 jobs:
   terraform:
@@ -19,26 +19,17 @@ jobs:
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: 1.5.0 # Use a specific version as necessário
+          terraform_version: 1.9.6
 
-      - name: Initialize Terraform
+      - name: Initialize Terraform in the root directory
+        working-directory: ${{ github.workspace }}
         run: terraform init
 
-      - name: Format Terraform block and write to file
-        run: |
-          # Replace occurrences of } and { with newlines and proper indentation
-          echo "${{ github.event.inputs.terraform_block }}" | sed 's/{/ {\n  /g' | sed 's/}/\n}/g' > main.tf
-          
-          # Display the formatted file for debugging purposes
-          cat main.tf
-        shell: bash
-
-      - name: Validate Terraform
+      - name: Validate Terraform in the root directory
+        working-directory: ${{ github.workspace }}
         run: terraform validate
 
-      - name: Apply Terraform
+      - name: Apply Terraform in the root directory
+        working-directory: ${{ github.workspace }}
         if: ${{ success() }}
         run: terraform apply -auto-approve
-
-      - name: Clean up Terraform block file
-        run: rm -f main.tf
