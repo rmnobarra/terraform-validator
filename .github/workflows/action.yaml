@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       terraform_block:
-        description: 'Terraform block to execute'
+        description: 'Terraform block to execute in one line'
         required: true
         type: string
 
@@ -19,15 +19,22 @@ jobs:
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: 1.5.0 # Use a specific version as needed
+          terraform_version: 1.5.0 # Use a specific version as necessário
 
       - name: Initialize Terraform
         run: terraform init
 
-      - name: Validate Terraform
+      - name: Format Terraform block and write to file
         run: |
-          echo '${{ github.event.inputs.terraform_block }}' > main.tf
-          terraform validate
+          # Replace occurrences of } and { with newlines and proper indentation
+          echo "${{ github.event.inputs.terraform_block }}" | sed 's/{/ {\n  /g' | sed 's/}/\n}/g' > main.tf
+          
+          # Display the formatted file for debugging purposes
+          cat main.tf
+        shell: bash
+
+      - name: Validate Terraform
+        run: terraform validate
 
       - name: Apply Terraform
         if: ${{ success() }}
